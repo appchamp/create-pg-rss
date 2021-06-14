@@ -1,4 +1,4 @@
-#
+#!/usr/bin/python3
 
 r"""*Module to generate PG RSS feed.*
 """
