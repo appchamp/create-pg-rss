@@ -1,3 +1,5 @@
+#
+
 r"""*Module to generate PG RSS feed.*
 """
 
@@ -16,17 +18,18 @@ import requests_cache
 import requests as rq
 from bs4 import BeautifulSoup as BSoup
 from feedgen.feed import FeedGenerator  # type: ignore
-from packaging.utils import canonicalize_version
 
 BASE_URL: str = "https://podcast.app"
-PG_URL: str = "https://podcast.app/paul-graham-essays-audio-p1755465/?limit=250&offset=0"
+PG_URL: str = (
+    "https://podcast.app/paul-graham-essays-audio-p1755465/?limit=250&offset=0"
+)
 
 FORMAT: str = "%(asctime)-15s  [%(levelname)-10s]  %(message)s"
 logging.basicConfig(format=FORMAT, stream=sys.stdout, level=logging.INFO)
 
 logger: logging.Logger = logging.getLogger()
 
-FEED_PATH: str = "feed/pg.rss"
+FEED_PATH: str = "pg.rss"
 
 
 @attr.s(slots=True)
@@ -46,7 +49,7 @@ def resp_report(resp: rq.Response) -> str:
 def get_release_pages() -> rq.Response:
     """Retrieve the release page contents."""
     return rq.get(PG_URL)
-    
+
 
 def gen_entries(resp: rq.Response) -> Iterable[bs4.Tag]:
     """Yield the release entries from the stable downloads page."""
@@ -56,9 +59,9 @@ def gen_entries(resp: rq.Response) -> Iterable[bs4.Tag]:
 
 def extract_info(li: bs4.Tag) -> Info:
     """Produce an Info instance with relevant info for the provided stable release."""
-    #logger.debug(f"got li={li.contents})")
-    
-    id = li.find("a", class_="ep-item").get('href')
+    logger.debug(f"got li={li.contents})")
+
+    id = li.find("a", class_="ep-item").get("href")
     logger.debug(f"id= {id}")
 
     title = li.find("h3", class_="ep-row-title").string
@@ -66,12 +69,12 @@ def extract_info(li: bs4.Tag) -> Info:
 
     description = li.find("p", class_="ep-row-desc").string
     logger.debug(f"desc= {description}")
-    
+
     date_str = li.find("span", class_="ep-published").string.strip()
-    date = datetime.strptime(date_str, '%m.%d.%Y').replace(tzinfo=timezone.utc)
+    date = datetime.strptime(date_str, "%m.%d.%Y").replace(tzinfo=timezone.utc)
     logger.debug(f"date= {date}")
 
-    enc = li.find("a", class_="play-btn").get('data-mp3')
+    enc = li.find("a", class_="play-btn").get("data-mp3")
     logger.debug(f"enclosure= {enc}")
 
     return Info(id=id, title=title, description=description, enc=enc, date=date)
@@ -83,7 +86,7 @@ def create_base_feed() -> FeedGenerator:
 
     fg.id(PG_URL)
     fg.title("Paul Graham Essays (Audio)")
-#    fg.author({"name": "App Champ", "email": "app.engine.champ@gmail.com"})
+    #    fg.author({"name": "App Champ", "email": "app.engine.champ@gmail.com"})
     fg.link(
         href="https://podcast.app/paul-graham-essays-audio-p1755465/",
         rel="self",
@@ -121,15 +124,13 @@ def write_feed(fg: FeedGenerator) -> None:
 def main():
     """Execute data collection and feed generation."""
     # init the global cache
-    requests_cache.install_cache('pg_cache')
+    requests_cache.install_cache("pg_cache")
 
     # get the main page
     resp_pg = get_release_pages()
 
     if not resp_pg.ok:
-        logger.critical(
-            f"PG pages download failed: {resp_report(resp_pg)}"
-        )
+        logger.critical(f"PG pages download failed: {resp_report(resp_pg)}")
         return 1
 
     logger.info("Download pages retrieved.")
@@ -137,10 +138,7 @@ def main():
     fg = create_base_feed()
     logger.info("Base feed generator created")
 
-    [
-        add_feed_item(fg, extract_info(li))
-        for li in gen_entries(resp_pg)
-    ]
+    [add_feed_item(fg, extract_info(li)) for li in gen_entries(resp_pg)]
     logger.info("Articles added to feed")
 
     write_feed(fg)

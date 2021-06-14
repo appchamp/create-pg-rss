@@ -19,6 +19,10 @@ authors = ["App Champ <appenginechamp>"]
 python = "^3.8"
 requests = "^2.25.1"
 requests-cache = "^0.6.3"
+arrow = "^1.1.0"
+bs4 = "^0.0.1"
+feedgen = "^0.9.0"
+attrs = "^21.2.0"
 
 [tool.poetry.dev-dependencies]
 
